@@ -136,4 +136,20 @@ async function run() {
   }
 }
 
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+
+  // --- Auto-ping a cada 5 minutos ---
+  const SELF_URL = `https://backend-equipesapp.onrender.com/ping`; // 🔁 Substitua pela sua URL pública
+  setInterval(() => {
+    axios.get(SELF_URL)
+      .then(() => {
+        console.log(`[AUTO-PING] Ping enviado para ${SELF_URL}`);
+      })
+      .catch((err) => {
+        console.error(`[AUTO-PING] Erro: ${err.message}`);
+      });
+  }, 5 * 60 * 1000); // 5 minutos em milissegundos
+});
+
 run();
