@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ObjectId } = require('mongodb'); // <- import ObjectId
+const { MongoClient, ObjectId } = require('mongodb');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -22,15 +22,26 @@ async function run() {
     const database = client.db("volei-app");
     const equipesCollection = database.collection("equipes");
 
+    // Rota de ping para manter o servidor acordado (Render)
+    app.get('/ping', (req, res) => {
+      res.status(200).send('pong');
+    });
+
     // Rota POST para cadastro da equipe
     app.post('/equipes', async (req, res) => {
       try {
-        const equipeData = req.body;
-        equipeData.dataCadastro = new Date();
+        const { nomeEquipe, categoria, tecnico = null } = req.body;
 
-        if (!equipeData.nomeEquipe || !equipeData.categoria || !equipeData.tecnico) {
-          return res.status(400).send({ message: "Dados incompletos para cadastro." });
+        if (!nomeEquipe || !categoria) {
+          return res.status(400).send({ message: "Nome da equipe e categoria são obrigatórios." });
         }
+
+        const equipeData = {
+          nomeEquipe,
+          categoria,
+          tecnico,
+          dataCadastro: new Date()
+        };
 
         const result = await equipesCollection.insertOne(equipeData);
         res.status(201).send({
@@ -61,10 +72,12 @@ async function run() {
         if (!ObjectId.isValid(id)) {
           return res.status(400).json({ message: 'ID inválido' });
         }
+
         const equipe = await equipesCollection.findOne({ _id: new ObjectId(id) });
         if (!equipe) {
           return res.status(404).json({ message: 'Equipe não encontrada' });
         }
+
         res.json(equipe);
       } catch (error) {
         console.error('Erro ao buscar equipe:', error);
@@ -76,19 +89,24 @@ async function run() {
     app.put('/equipes/:id', async (req, res) => {
       try {
         const id = req.params.id;
-        const dadosAtualizados = req.body;
-
         if (!ObjectId.isValid(id)) {
           return res.status(400).json({ message: 'ID inválido' });
         }
 
-        if (!dadosAtualizados.nomeEquipe || !dadosAtualizados.categoria || !dadosAtualizados.tecnico) {
-          return res.status(400).json({ message: 'Dados incompletos para atualização.' });
+        const { nomeEquipe, categoria, tecnico = null } = req.body;
+        if (!nomeEquipe || !categoria) {
+          return res.status(400).json({ message: 'Nome da equipe e categoria são obrigatórios.' });
         }
 
         const result = await equipesCollection.updateOne(
           { _id: new ObjectId(id) },
-          { $set: dadosAtualizados }
+          {
+            $set: {
+              nomeEquipe,
+              categoria,
+              tecnico
+            }
+          }
         );
 
         if (result.matchedCount === 0) {
@@ -107,7 +125,6 @@ async function run() {
     app.delete('/equipes/:id', async (req, res) => {
       try {
         const id = req.params.id;
-
         if (!ObjectId.isValid(id)) {
           return res.status(400).json({ message: 'ID inválido' });
         }
@@ -125,31 +142,14 @@ async function run() {
       }
     });
 
-    // Inicia o servidor
-    app.listen(port, () => {
-      console.log(`Servidor rodando na porta ${port}`);
-    });
-
   } catch (err) {
     console.error("Erro ao conectar ao MongoDB:", err);
     await client.close();
   }
 }
 
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
-
-  // --- Auto-ping a cada 5 minutos ---
-  const SELF_URL = `https://backend-equipesapp.onrender.com/ping`; // 🔁 Substitua pela sua URL pública
-  setInterval(() => {
-    axios.get(SELF_URL)
-      .then(() => {
-        console.log(`[AUTO-PING] Ping enviado para ${SELF_URL}`);
-      })
-      .catch((err) => {
-        console.error(`[AUTO-PING] Erro: ${err.message}`);
-      });
-  }, 5 * 60 * 1000); // 5 minutos em milissegundos
+run().then(() => {
+  app.listen(port, () => {
+    console.log(`Servidor rodando na porta ${port}`);
+  });
 });
-
-run();
