@@ -32,8 +32,8 @@ async function run() {
     app.post('/equipes', async (req, res) => {
       try {
         // --- ALTERAÇÃO AQUI ---
-        // Agora também extraímos o array 'jogadores' do corpo da requisição.
-        const { nomeEquipe, categoria, tecnico = null, jogadores = [] } = req.body;
+        // Agora extraímos 'atletas' e 'liberos' separadamente.
+        const { nomeEquipe, categoria, tecnico = null, atletas = [], liberos = [] } = req.body;
 
         if (!nomeEquipe || !categoria) {
           return res.status(400).send({ message: "Nome da equipe e categoria são obrigatórios." });
@@ -43,7 +43,8 @@ async function run() {
           nomeEquipe,
           categoria,
           tecnico,
-          jogadores, // <-- E o incluímos no objeto a ser salvo
+          atletas,   // <-- Campo para atletas
+          liberos,   // <-- Novo campo para líberos
           dataCadastro: new Date()
         };
 
@@ -98,8 +99,8 @@ async function run() {
         }
 
         // --- ALTERAÇÃO AQUI ---
-        // Também extraímos 'jogadores' para a atualização.
-        const { nomeEquipe, categoria, tecnico = null, jogadores = [] } = req.body;
+        // Também extraímos 'atletas' e 'liberos' para a atualização.
+        const { nomeEquipe, categoria, tecnico = null, atletas = [], liberos = [] } = req.body;
         if (!nomeEquipe || !categoria) {
           return res.status(400).json({ message: 'Nome da equipe e categoria são obrigatórios.' });
         }
@@ -111,7 +112,8 @@ async function run() {
               nomeEquipe,
               categoria,
               tecnico,
-              jogadores // <-- E o incluímos no operador $set para ser atualizado
+              atletas, // <-- Atualiza o campo de atletas
+              liberos  // <-- Atualiza o novo campo de líberos
             }
           }
         );
