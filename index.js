@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const axios = require('axios'); // IMPORTAÇÃO ADICIONADA
 const { MongoClient, ObjectId } = require('mongodb');
 
 const app = express();
@@ -154,15 +155,14 @@ run().then(() => {
   });
 });
 
-// --- Auto-ping a cada 5 minutos ---
-const SELF_URL = `https://salas-app-back-end.onrender.com/ping`; // 🔁 Substitua pela sua URL pública
-  setInterval(() => {
-    axios.get(SELF_URL)
-      .then(() => {
-        console.log(`[AUTO-PING] Ping enviado para ${SELF_URL}`);
-      })
-      .catch((err) => {
-        console.error(`[AUTO-PING] Erro: ${err.message}`);
-      });
-  }, 2 * 60 * 1000); // 5 minutos em milissegundos
-});
+// --- Auto-ping a cada 2 minutos ---
+const SELF_URL = `https://salas-app-back-end.onrender.com/ping`; // Substitua pela sua URL pública
+setInterval(() => {
+  axios.get(SELF_URL)
+    .then(() => {
+      console.log(`[AUTO-PING] Ping enviado para ${SELF_URL}`);
+    })
+    .catch((err) => {
+      console.error(`[AUTO-PING] Erro: ${err.message}`);
+    });
+}, 2 * 60 * 1000); // 2 minutos
