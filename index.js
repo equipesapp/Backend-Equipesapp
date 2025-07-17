@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const axios = require('axios'); // IMPORTAÇÃO ADICIONADA
+const axios = require('axios');
 const { MongoClient, ObjectId } = require('mongodb');
 
 const app = express();
@@ -28,10 +28,12 @@ async function run() {
       res.status(200).send('pong');
     });
 
-    // Rota POST para cadastro da equipe
+    // Rota POST para cadastro da equipe (CORRIGIDA)
     app.post('/equipes', async (req, res) => {
       try {
-        const { nomeEquipe, categoria, tecnico = null } = req.body;
+        // --- ALTERAÇÃO AQUI ---
+        // Agora também extraímos o array 'jogadores' do corpo da requisição.
+        const { nomeEquipe, categoria, tecnico = null, jogadores = [] } = req.body;
 
         if (!nomeEquipe || !categoria) {
           return res.status(400).send({ message: "Nome da equipe e categoria são obrigatórios." });
@@ -41,6 +43,7 @@ async function run() {
           nomeEquipe,
           categoria,
           tecnico,
+          jogadores, // <-- E o incluímos no objeto a ser salvo
           dataCadastro: new Date()
         };
 
@@ -86,7 +89,7 @@ async function run() {
       }
     });
 
-    // Rota PUT para atualizar equipe pelo id
+    // Rota PUT para atualizar equipe pelo id (CORRIGIDA)
     app.put('/equipes/:id', async (req, res) => {
       try {
         const id = req.params.id;
@@ -94,7 +97,9 @@ async function run() {
           return res.status(400).json({ message: 'ID inválido' });
         }
 
-        const { nomeEquipe, categoria, tecnico = null } = req.body;
+        // --- ALTERAÇÃO AQUI ---
+        // Também extraímos 'jogadores' para a atualização.
+        const { nomeEquipe, categoria, tecnico = null, jogadores = [] } = req.body;
         if (!nomeEquipe || !categoria) {
           return res.status(400).json({ message: 'Nome da equipe e categoria são obrigatórios.' });
         }
@@ -105,7 +110,8 @@ async function run() {
             $set: {
               nomeEquipe,
               categoria,
-              tecnico
+              tecnico,
+              jogadores // <-- E o incluímos no operador $set para ser atualizado
             }
           }
         );
@@ -156,7 +162,8 @@ run().then(() => {
 });
 
 // --- Auto-ping a cada 2 minutos ---
-const SELF_URL = `https://salas-app-back-end.onrender.com/ping`; // Substitua pela sua URL pública
+// ATENÇÃO: Substitua a URL abaixo pela URL pública do seu backend no Render.
+const SELF_URL = `https://backend-equipesapp.onrender.com/ping`; 
 setInterval(() => {
   axios.get(SELF_URL)
     .then(() => {
